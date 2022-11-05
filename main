@@ -1,4 +1,32 @@
-import sys
+import numpy as np
+from glob import glob
+from PIL import Image
+import matplotlib.pyplot as plt
+import os
 
+# image_datas 값 ['C:\\Users\\82104\\OneDrive\\mushroom\\a.jpg', 'C:\\Users\\82104\\OneDrive\\mushroom\\ce (105).jpg']
+image_datas = glob("C:\\Users\\82104\\OneDrive\\mushroom\\*.jpg")
+class_name = ["na", "nu"]
+dic = {"na": 0, "nu": 1}
 
-print("yes")
+X = []
+Y = []
+for imagename in image_datas:
+    image = Image.open(imagename)
+    print(image)
+    image = image.resize((128, 128))
+    image = image.convert('RGB')
+    image.save("mushfoomsave", "png")
+    #image = np.array(image)
+
+    X.append(image)
+
+'''plt.figure(figsize=(15, 9))
+for i in range(2):
+    plt.subplot(3, 5, i + 1)
+    plt.xticks([])
+    plt.yticks([])
+    plt.grid(False)
+    plt.imshow(X[i])
+
+plt.show()'''
