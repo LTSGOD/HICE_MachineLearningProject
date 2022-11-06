@@ -35,7 +35,7 @@ class LogisticRegression:
         self.n = n
         self.epoch = epoch
         self.w = np.random.randn(30000, 33)  # np.array([[0.7]*990000])
-        self.w = self.w.reshape(30000, 33)
+        #self.w = self.w.reshape(30000, 33)
 
     def learn(self):
         for i in range(0, self.epoch):
@@ -76,11 +76,11 @@ class LogisticRegression:
         return grad
 
 
-target = LogisticRegression(100, 30000, 0.0001, 300)
+target = LogisticRegression(100, 30000, 0.00001, 500)
 target.learn()  # 학습 시작
 
 
-a = np.arange(0, 300, 1)
+a = np.arange(0, 500, 1)
 b = cost_plotting_list
 plt.plot(a, b)
 plt.show()
