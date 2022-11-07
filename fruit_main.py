@@ -11,7 +11,7 @@ warnings.simplefilter(action='ignore', category=FutureWarning)
 # trainig data 파일경로
 training_dir = "C:\\Users\\82104\\OneDrive\\HICEMachingLearningProject\\archive\\train\\train"
 # test data 파일경로
-test_dir = "C:\\Users\\82104\\OneDrive\\HICEMachingLearningProject\\archive\\test"
+test_dir = "C:\\Users\\82104\\OneDrive\\HICEMachingLearningProject\\archive\\test\\test"
 
 training_datagen = ImageDataGenerator(rescale=1./255)  # 정규화
 
@@ -53,4 +53,4 @@ for i in range(8):
     plt.axis('off')
 
 plt.show()'''
-#holololololo
+# holololololo
