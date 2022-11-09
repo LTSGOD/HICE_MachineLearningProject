@@ -34,7 +34,7 @@ class LogisticRegression:
         self.m = m
         self.n = n
         self.epoch = epoch
-        self.w = np.random.randn(30000, 33)  # np.array([[0.7]*990000])
+        self.w = np.random.randn(30000, 33)
         #self.w = self.w.reshape(30000, 33)
 
     def learn(self):
@@ -76,11 +76,55 @@ class LogisticRegression:
         return grad
 
 
-target = LogisticRegression(100, 30000, 0.00001, 500)
+target = LogisticRegression(16854, 30000, 0.00001, 50)
 target.learn()  # 학습 시작
 
 
-a = np.arange(0, 500, 1)
+def converter(par):
+    a = 0
+    for i in range(33):
+        if(par[i] == 1):
+            return a
+        else:
+            a += 1
+
+
+avg = 0
+
+# 100개 데이터 test 시작
+for i in range(0, 100):
+    # data 값 예측값 1 X 10 행렬로 나옴. (각숫자의 확률)
+
+    result = target.predict(fm.test_x[i])
+    prediction = np.argmax(result)  # 가장 큰 확률 값 갖는 숫자 추출
+    con = converter(fm.test_label[i])
+
+    print("Test Data Index:", i, "Computed class:",
+          fm.fruit_name[prediction], ", True class:", fm.fruit_name[con])  # 예측 비교
+
+    if(prediction == con):  # 정확도 계산
+        avg += 1
+
+print("Accuracy:", avg/100)
+
+avg = 0
+# train 100개 데이터 test 시작
+for i in range(0, 100):
+    # data 값 예측값 1 X 10 행렬로 나옴. (각숫자의 확률)
+
+    result = target.predict(fm.train_x[i])
+    prediction = np.argmax(result)  # 가장 큰 확률 값 갖는 숫자 추출
+    con = converter(fm.train_label[i])
+
+    print("Test Data Index:", i, "Computed class:",
+          fm.fruit_name[prediction], ", True class:", fm.fruit_name[con])  # 예측 비교
+
+    if(prediction == con):  # 정확도 계산
+        avg += 1
+
+print("Accuracy:", avg/100)
+
+a = np.arange(0, 50, 1)
 b = cost_plotting_list
 plt.plot(a, b)
 plt.show()
