@@ -25,10 +25,9 @@ batch_size = 100  # mini_batch 이용
 
 training_generator = training_datagen.flow_from_directory(
     training_dir,
-    batch_size=batch_size,  # batch size
+    batch_size=16854,  # batch size
     target_size=(100, 100),  # target 크기 100 x 100
     class_mode='categorical',  # one hot encoding 사용
-    shuffle=True  # 무작위
 )
 
 test_generator = test_datagen.flow_from_directory(
@@ -62,39 +61,72 @@ plt.show()"""
 
 """--------------------------------NN학습--------------------------------------"""
 
-network = TwoLayerNet(input_size=30000, hidden_size=2000, output_size=33)
+network = TwoLayerNet(input_size=30000, hidden_size=5000, output_size=33)
 
 # 하이퍼 파라미터
-iters_num = 10000
-train_size = 16874  # train_x.shape[0]
+iters_num = 1000
+train_size = 16854  # train_x.shape[0]
 learning_rate = 0.1
 
 train_cost_list = []
 train_acc_list = []
 test_acc_list = []
 
+img, label = next(training_generator)
+
+train_x = img.reshape(16854, 30000)  # flatten(1차원배열로변경)
+train_label = label
+
+Timg, Tlabel = next(test_generator)
+
+test_x = Timg.reshape(batch_size, 30000)
+test_label = Tlabel
+
 # 1epoch당 반복수
 iter_per_epoch = max(train_size / batch_size, 1)
 
 for i in range(iters_num):
-    img, label = next(training_generator)
-    #Timg, Tlabel = next(test_generator)
 
-    train_x = img.reshape(batch_size, 30000)  # flatten(1차원배열로변경)
-    train_label = label
-
-    #test_x = Timg.reshape(batch_size, 30000)
-    #test_label = Tlabel
+    batch_mask = np.random.choice(train_size, batch_size)
+    x_batch = train_x[batch_mask]
+    t_batch = train_label[batch_mask]
 
     # 오차 역전파법
-    grad = network.gradient(train_x, train_label)
+    grad = network.gradient(x_batch, t_batch)
 
     # 매개변수 갱신
     for key in ('W1', 'b1', 'W2', 'b2'):
         network.params[key] -= learning_rate * grad[key]
 
     # 학습경과기록
-    cost = network.cost(train_x, train_label)
+    cost = network.cost(x_batch, t_batch)
     train_cost_list.append(cost)
+    print("epoch", i, "cost:", cost)
 
     # 1에폭당 정확도
+    """train_acc = network.accuracy(train_x, train_label)
+    test_acc = network.accuracy(test_x, test_label)
+    train_acc_list.append(train_acc)
+    test_acc_list.append(test_acc)
+    print("train acc, test acc |" + str(train_acc) + "," + str(test_acc))"""
+
+
+""" numerical vs backpropagation 검증
+img, label = next(training_generator)
+
+train_x = img.reshape(batch_size, 30000)  # flatten(1차원배열로변경)
+train_label = label
+
+batch_x = train_x[:1]
+batch_t = train_label[:1]
+
+print(batch_t)
+
+grad_numerical = network.numerical_gradient(batch_x, batch_t)
+grad_backprop = network.gradient(batch_x, batch_t)
+
+print("hohoho")
+
+for key in grad_numerical.keys():
+    diff = np.average(np.abs(grad_backprop[key] - grad_numerical[key]))
+    print(key + ":" + str(diff))"""

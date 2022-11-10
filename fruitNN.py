@@ -2,6 +2,9 @@ import numpy as np
 from collections import OrderedDict
 
 
+count = 0
+
+
 class Affine:
     def __init__(self, W, b):
         self.W, self.b = W, b
@@ -46,15 +49,27 @@ class SoftmaxWithLoss:
     def forward(self, x, t):
         self.t = t
         self.y = softmax(x)
+
         self.loss = cross_entropy_error(self.y, self.t)
 
         return self.loss
 
+    def backward(self, dout=1):
+        batch_size = self.t.shape[0]
+        dx = (self.y - self.t)/batch_size
+
+        return dx
+
 
 def softmax(x):
-    exp_a = np.exp(x)
+    c = np.max(x)
+    exp_a = np.exp(x - c)
     sum_exp_a = np.sum(exp_a)
-    return exp_a / sum_exp_a
+
+    result = exp_a / sum_exp_a
+    # print(result.shape)
+    # print(result)
+    return result
 
 
 def cross_entropy_error(y, t):
@@ -64,9 +79,44 @@ def cross_entropy_error(y, t):
 
     batch_size = y.shape[0]
 
-    print(batch_size)
+    # -np.sum(np.log(y[np.arange(batch_size), t] + 1e-7)) / batch_size
+    return -np.sum(t * np.log(y + 1e-7)) / batch_size
 
-    return -np.sum(np.log(y[np.arange(batch_size), t] + 1e-7)) / batch_size
+
+def _numerical_gradient_no_batch_(f, x):
+
+    h = 1e-4
+    grad = np.zeros_like(x)
+
+    for idx in range(x.size):
+        tmp_val = x[idx]
+
+        x[idx] = tmp_val + h
+        fxh1 = f(x)
+
+        x[idx] = tmp_val - h
+        fxh2 = f(x)
+
+        grad[idx] = (fxh1 - fxh2) / (2 * h)
+        x[idx] = tmp_val
+
+    return grad
+
+
+def numerical_gradient(f, X):
+    global count
+    if X.ndim == 1:
+
+        return _numerical_gradient_no_batch_
+    else:
+        grad = np.zeros_like(X)
+
+        for idx, x in enumerate(X):
+            grad[idx] = _numerical_gradient_no_batch_(f, x)
+            print(count)
+            count = count + 1
+
+        return grad
 
 
 class TwoLayerNet:
@@ -109,16 +159,18 @@ class TwoLayerNet:
         def cost_W(W): return self.cost(x, t)
 
         grads = {}
-        grads['W1'] = self.numerical_gradient(cost_W, self.params['W1'])
-        grads['b1'] = self.numerical_gradient(cost_W, self.params['b1'])
-        grads['W2'] = self.numerical_gradient(cost_W, self.params['W2'])
-        grads['b2'] = self.numerical_gradient(cost_W, self.params['b2'])
+        print(self.params['W1'].shape)
+        grads['W1'] = numerical_gradient(cost_W, self.params['W1'])
+        grads['b1'] = numerical_gradient(cost_W, self.params['b1'])
+        grads['W2'] = numerical_gradient(cost_W, self.params['W2'])
+        grads['b2'] = numerical_gradient(cost_W, self.params['b2'])
 
         return grads
 
     def gradient(self, x, t):
+        # 순전파
         self.cost(x, t)
-
+        # 역전파
         dout = 1
         dout = self.lastLayer.backward(dout)
         layers = list(self.layers.values())
@@ -126,11 +178,11 @@ class TwoLayerNet:
         layers.reverse()
 
         for layer in layers:
-            dout = layers.backward(dout)
+            dout = layer.backward(dout)
 
         grads = {}
         grads['W1'] = self.layers['Affine1'].dW
-        grads['b1'] = self.layers['b1'].db
+        grads['b1'] = self.layers['Affine1'].db
         grads['W2'] = self.layers['Affine2'].dW
         grads['b2'] = self.layers['Affine2'].db
 
