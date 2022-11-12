@@ -118,6 +118,23 @@ def numerical_gradient(f, X):
         return grad
 
 
+# * 클래스 인스턴스 변수 
+# 1. params: 신경망의 매개변수를 보관하는 딕셔너리 변수
+# - params['W1']은 1번째 층의 가중치, params['b1']은 1번째 층의 편향. 
+# - params['W2']은 2번째 층의 가중치, params['b2']은 2번째 층의 편향. 
+
+# 2. layers: 신경망의 계층을 순서대로 보관하는 딕셔너리 변수 
+# - layers['Affine1'], layers['Relu1'], layers['Affine2'] 처럼, 각 계층을 순서대로 유지한다. 
+
+# 3. lastLayer: 신경망의 마지막 계층. 
+
+# * 클래스의 메서드 
+# - __init__: 초기화 수행 
+# - predict(x): 추론
+# - loss(x, t): 손실함수의 값을 구한다. x는 이미지 데이터, t는 정답 레이블 
+# - accuracy(x, t): 정확도를 구한다. 
+# - numerical_gradient(x, t): 가중치의 기울기를 수치미분으로 구함 
+# - gradient(x, t): 가중치의 기울기를 오차 역전파로 구함
 class TwoLayerNet:
     def __init__(self, input_size, hidden_size, output_size, weight_init_std=0.01):
         # 가중치 초기화
@@ -140,15 +157,16 @@ class TwoLayerNet:
         for layer in self.layers.values():
             x = layer.forward(x)
         return x
-
+    
+     # x: 입력 데이터, t : 정답레이블 
     def cost(self, x, t):
         y = self.predict(x)
         return self.lastLayer.forward(y, t)
 
     def accuracy(self, x, t):
         y = self.predict(x)
-        y = np.argmax(y, axis=1)
-        if t.ndim != 1:
+        y = np.argmax(y, axis=1) #argmax는 요소가 최댓값인 index들을 리스트로 나타냄
+        if t.ndim != 1: #ndim은 차원의 수를 나타내며 one-hot-encoding이 되어있는 경우 실행
             t = np.argmax(t, axis=1)
         accuracy = np.sum(y == t) / float(x.shape[0])
 
@@ -156,11 +174,11 @@ class TwoLayerNet:
 
     def numerical_gradient(self, x, t):
         def cost_W(W): return self.cost(x, t)
-
+        # grads : 기울기 보관하는 딕셔너리 변수 
         grads = {}
         print(self.params['W1'].shape)
-        grads['W1'] = numerical_gradient(cost_W, self.params['W1'])
-        grads['b1'] = numerical_gradient(cost_W, self.params['b1'])
+        grads['W1'] = numerical_gradient(cost_W, self.params['W1']) # grads['W1']은 1층의 가중치의 기울기
+        grads['b1'] = numerical_gradient(cost_W, self.params['b1']) # grads['B1']은 1층의 편향의 기울기
         grads['W2'] = numerical_gradient(cost_W, self.params['W2'])
         grads['b2'] = numerical_gradient(cost_W, self.params['b2'])
 
@@ -170,7 +188,7 @@ class TwoLayerNet:
         # 순전파
         self.cost(x, t)
         # 역전파
-        dout = 1
+        dout = 1 #맨 마지막 층이므로 다음 층에서 흘러들어오는 값이 없어서 1
         dout = self.lastLayer.backward(dout)
         layers = list(self.layers.values())
 
@@ -179,6 +197,7 @@ class TwoLayerNet:
         for layer in layers:
             dout = layer.backward(dout)
 
+        # 결과 저장
         grads = {}
         grads['W1'] = self.layers['Affine1'].dW
         grads['b1'] = self.layers['Affine1'].db
