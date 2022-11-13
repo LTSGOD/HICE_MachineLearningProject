@@ -54,17 +54,12 @@ class SoftmaxWithLoss:
         self.loss = cross_entropy_error(self.y, self.t)
 
         return self.loss
-    
+
     def backward(self, dout=1):
-<<<<<<< HEAD
-        batch_size = self.t.shape[0]
-        dx = (self.y-self.t) / batch_size
-=======
 
         batch_size = self.t.shape[0]  # 100
         dx = (self.y - self.t)/batch_size
 
->>>>>>> cab0b4b8 (One hidden Layer per unit 1000)
         return dx
 
 
@@ -156,8 +151,8 @@ class TwoLayerNet:
         for layer in self.layers.values():
             x = layer.forward(x)
         return x
-    
-    # x: 입력 데이터, t : 정답레이블 
+
+    # x: 입력 데이터, t : 정답레이블
     def cost(self, x, t):
         y = self.predict(x)
         result = self.lastLayer.forward(y, t)
@@ -166,30 +161,32 @@ class TwoLayerNet:
 
     def accuracy(self, x, t):
         y = self.predict(x)
-        y = np.argmax(y, axis=1) #argmax는 요소가 최댓값인 index들을 리스트로 나타냄
-        if t.ndim != 1: #ndim은 차원의 수를 나타내며 one-hot-encoding이 되어있는 경우 실행
+        y = np.argmax(y, axis=1)  # argmax는 요소가 최댓값인 index들을 리스트로 나타냄
+        if t.ndim != 1:  # ndim은 차원의 수를 나타내며 one-hot-encoding이 되어있는 경우 실행
             t = np.argmax(t, axis=1)
         accuracy = np.sum(y == t) / float(x.shape[0])
 
         return accuracy
 
-    def numerical_gradient(self, x, t): # 가중치의 기울기를 수치미분으로 구함 
+    def numerical_gradient(self, x, t):  # 가중치의 기울기를 수치미분으로 구함
         def cost_W(W): return self.cost(x, t)
-        # grads : 기울기 보관하는 딕셔너리 변수 
+        # grads : 기울기 보관하는 딕셔너리 변수
         grads = {}
         print(self.params['W1'].shape)
-        grads['W1'] = numerical_gradient(cost_W, self.params['W1']) # grads['W1']은 1층의 가중치의 기울기
-        grads['b1'] = numerical_gradient(cost_W, self.params['b1']) # grads['B1']은 1층의 편향의 기울기
+        grads['W1'] = numerical_gradient(
+            cost_W, self.params['W1'])  # grads['W1']은 1층의 가중치의 기울기
+        grads['b1'] = numerical_gradient(
+            cost_W, self.params['b1'])  # grads['B1']은 1층의 편향의 기울기
         grads['W2'] = numerical_gradient(cost_W, self.params['W2'])
         grads['b2'] = numerical_gradient(cost_W, self.params['b2'])
 
         return grads
 
-    def gradient(self, x, t): # 가중치의 기울기를 오차 역전파로 구함
+    def gradient(self, x, t):  # 가중치의 기울기를 오차 역전파로 구함
         # 순전파
         self.cost(x, t)
         # 역전파
-        dout = 1 # 맨 마지막 층이므로 다음 층에서 흘러들어오는 값이 없어서 1
+        dout = 1  # 맨 마지막 층이므로 다음 층에서 흘러들어오는 값이 없어서 1
         dout = self.lastLayer.backward(dout)
         layers = list(self.layers.values())
 
