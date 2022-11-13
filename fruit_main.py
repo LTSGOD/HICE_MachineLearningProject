@@ -25,7 +25,7 @@ batch_size = 100  # mini_batch 이용
 
 training_generator = training_datagen.flow_from_directory(
     training_dir,
-    batch_size=16854,  # batch size
+    batch_size=16858,  # batch size
     target_size=(100, 100),  # target 크기 100 x 100
     class_mode='categorical',  # one hot encoding 사용
 )
@@ -38,53 +38,45 @@ test_generator = test_datagen.flow_from_directory(
 )
 
 
-"""def name_converter(par):
-    a = 0
-    for i in range(33):
-        if(par[i] == 1):
-            return a
-        else:
-            a += 1
+# plt.figure(figsize=(100, 100))
 
+# for i in range(100):
+#     plt.subplot(10, 10, i+1)
+#     plt.imshow(Timg[i])
+#     con = name_converter(test_label[i])
+#     plt.title(fruit_name[con])
+#     plt.axis('off')
 
-plt.figure(figsize=(100, 100))
+# plt.show()
 
-for i in range(100):
-    plt.subplot(10, 10, i+1)
-    plt.imshow(Timg[i])
-    con = name_converter(test_label[i])
-    plt.title(fruit_name[con])
-    plt.axis('off')
-
-plt.show()"""
-
-
-"""--------------------------------NN학습--------------------------------------"""
-
-network = TwoLayerNet(input_size=30000, hidden_size=5000, output_size=33)
-
-# 하이퍼 파라미터
-iters_num = 1000
-train_size = 16854  # train_x.shape[0]
-learning_rate = 0.1
-
-train_cost_list = []
-train_acc_list = []
-test_acc_list = []
-
+"""---------------------------------train image--------------------------------------"""
+print("loading train image")
 img, label = next(training_generator)
 
-train_x = img.reshape(16854, 30000)  # flatten(1차원배열로변경)
+train_x = img.reshape(16858, 30000)  # flatten(1차원배열로변경)
 train_label = label
 
+"""---------------------------------Test image--------------------------------------"""
+print("loading test image")
 Timg, Tlabel = next(test_generator)
 
 test_x = Timg.reshape(batch_size, 30000)
 test_label = Tlabel
 
-# 1epoch당 반복수
-iter_per_epoch = max(train_size / batch_size, 1)
+"""--------------------------------NN학습--------------------------------------"""
 
+network = TwoLayerNet(input_size=30000, hidden_size=1000, output_size=33)
+
+# 하이퍼 파라미터
+iters_num = 300
+train_size = train_x.shape[0]
+learning_rate = 0.01
+
+train_cost_list = []
+train_acc_list = []
+test_acc_list = []
+
+"""---------------------------------learning start--------------------------------------"""
 for i in range(iters_num):
 
     batch_mask = np.random.choice(train_size, batch_size)
@@ -98,17 +90,23 @@ for i in range(iters_num):
     for key in ('W1', 'b1', 'W2', 'b2'):
         network.params[key] -= learning_rate * grad[key]
 
+    # grad 에 문제가 있음
+    # print(grad['W2'].shape)
+
     # 학습경과기록
     cost = network.cost(x_batch, t_batch)
     train_cost_list.append(cost)
     print("epoch", i, "cost:", cost)
 
-    # 1에폭당 정확도
-    """train_acc = network.accuracy(train_x, train_label)
-    test_acc = network.accuracy(test_x, test_label)
-    train_acc_list.append(train_acc)
-    test_acc_list.append(test_acc)
-    print("train acc, test acc |" + str(train_acc) + "," + str(test_acc))"""
+    if(i % 10 == 0):
+        train_acc = network.accuracy(x_batch, t_batch)
+        test_acc = network.accuracy(test_x, test_label)
+        train_acc_list.append(train_acc)
+        test_acc_list.append(test_acc)
+
+        print(f'{i + 1} Train Acc: ', round(train_acc, 3))
+        print(f'{i + 1} Test Acc: ', round(test_acc, 3))
+        print()
 
 
 """ numerical vs backpropagation 검증

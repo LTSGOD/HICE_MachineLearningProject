@@ -8,7 +8,7 @@ count = 0
 class Affine:
     def __init__(self, W, b):
         self.W, self.b = W, b
-        self.x, self.dW, self.d = None, None, None
+        self.x, self.dW, self.db = None, None, None
 
     def forward(self, x):
         self.x = x
@@ -48,27 +48,38 @@ class SoftmaxWithLoss:
 
     def forward(self, x, t):
         self.t = t
-        self.y = softmax(x)
-
+        self.y = softmax(x)  # 100,3 행렬
+        # print(self.y.shape)
+        #print("softmax: ", self.y)
         self.loss = cross_entropy_error(self.y, self.t)
 
         return self.loss
     
     def backward(self, dout=1):
+<<<<<<< HEAD
         batch_size = self.t.shape[0]
         dx = (self.y-self.t) / batch_size
+=======
+
+        batch_size = self.t.shape[0]  # 100
+        dx = (self.y - self.t)/batch_size
+
+>>>>>>> cab0b4b8 (One hidden Layer per unit 1000)
         return dx
 
 
 def softmax(x):
-    c = np.max(x)
-    exp_a = np.exp(x - c)
-    sum_exp_a = np.sum(exp_a)
 
+    c = np.max(x, axis=1)
+
+    exp_a = np.exp(x.T - c)
+    sum_exp_a = np.sum(exp_a, axis=0)
     result = exp_a / sum_exp_a
-    # print(result.shape)
+
     # print(result)
-    return result
+    return result.T
+
+# soft max에서 문제발견 각행에서 최솟값을 빼야하는데 그냥 전체맥스값에서 빼버림
 
 
 def cross_entropy_error(y, t):
@@ -78,8 +89,10 @@ def cross_entropy_error(y, t):
 
     batch_size = y.shape[0]
 
+    result = -np.sum(t * np.log(y + 1e-7)) / batch_size
+    # print(result)
     # -np.sum(np.log(y[np.arange(batch_size), t] + 1e-7)) / batch_size
-    return -np.sum(t * np.log(y + 1e-7)) / batch_size
+    return result
 
 
 def _numerical_gradient_no_batch_(f, x):
@@ -129,6 +142,8 @@ class TwoLayerNet:
             np.random.randn(hidden_size, output_size)
         self.params['b2'] = np.zeros(output_size)
 
+        #print("초기 weight", self.params['W1'])
+
         # 계층생성
         self.layers = OrderedDict()
         self.layers['Affine1'] = Affine(self.params['W1'], self.params['b1'])
@@ -137,6 +152,7 @@ class TwoLayerNet:
         self.lastLayer = SoftmaxWithLoss()
 
     def predict(self, x):
+
         for layer in self.layers.values():
             x = layer.forward(x)
         return x
@@ -144,7 +160,9 @@ class TwoLayerNet:
     # x: 입력 데이터, t : 정답레이블 
     def cost(self, x, t):
         y = self.predict(x)
-        return self.lastLayer.forward(y, t)
+        result = self.lastLayer.forward(y, t)
+        # print(result) 스칼라 (크로스엔트로피오차값)
+        return result
 
     def accuracy(self, x, t):
         y = self.predict(x)
@@ -186,5 +204,7 @@ class TwoLayerNet:
         grads['b1'] = self.layers['Affine1'].db
         grads['W2'] = self.layers['Affine2'].dW
         grads['b2'] = self.layers['Affine2'].db
+
+        # print(grads)
 
         return grads
