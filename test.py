@@ -23,7 +23,7 @@ batch_size = 100  # mini_batch 이용
 
 training_generator = training_datagen.flow_from_directory(
     training_dir,
-    batch_size=2393,  # 2393,  # batch size 16858
+    batch_size=16858,  # 2393,  # batch size 16858
     target_size=(100, 100),  # target 크기 100 x 100
     class_mode='sparse',  # one hot encoding 사용
 )
@@ -53,11 +53,11 @@ test_label = Tlabel
 model = keras.Sequential()
 model.add(keras.layers.Flatten(input_shape=(100, 100, 3)))
 model.add(keras.layers.Dense(1000, activation='relu', name='hidden1'))
-model.add(keras.layers.Dense(5, activation='softmax'))
+model.add(keras.layers.Dense(33, activation='softmax'))
 
 model.summary()
 
 model.compile(optimizer='adam',
               loss='sparse_categorical_crossentropy', metrics='accuracy')
-model.fit(img, train_label, epochs=2)
+model.fit(img, train_label, epochs=5)
 model.evaluate(Timg, test_label)

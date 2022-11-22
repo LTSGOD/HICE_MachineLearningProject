@@ -6,6 +6,7 @@ from PIL import Image
 import matplotlib.pyplot as plt
 from fruitNN import TwoLayerNet
 import os
+import time
 
 fruit_name = ["Apple Braeburn", "Apple Granny", "Apricot", "Avocado", "Banana", "Blueberry", "Cactus fruit", "Cantaloupe", "Cherry", "Clementine", "Corn", "Cucumber Ripe", "Grape blue", "Kiwi", "Lemon", "Limes",
               "Mango", "Onion White", "Orange", "Papaya", "Passion Fruit", "Peach", "Pear", "Pepper green", "Pepper red", "Pineapple", "Plum", "Pomegranate", "Potato Red", "Raspberry", "Strawberry", "Tomato", "Watermelon"]
@@ -68,15 +69,17 @@ test_label = Tlabel
 network = TwoLayerNet(input_size=30000, hidden_size=1000, output_size=33)
 
 # 하이퍼 파라미터
-iters_num = 300
+iters_num = 1200  # 반복횟수
 train_size = train_x.shape[0]
-learning_rate = 0.01
+learning_rate = 0.01  # 학습률
 
 train_cost_list = []
 train_acc_list = []
 test_acc_list = []
 
+iter_per_epoch = max(train_size / batch_size, 1)
 """---------------------------------learning start--------------------------------------"""
+start = time.time()  # 시간측정
 for i in range(iters_num):
 
     batch_mask = np.random.choice(train_size, batch_size)
@@ -87,7 +90,7 @@ for i in range(iters_num):
     grad = network.gradient(x_batch, t_batch)
 
     # 매개변수 갱신
-    for key in ('W1', 'b1', 'W2', 'b2'):
+    for key in ('W1', 'b1', 'W2', 'b2', 'W3', 'b3'):
         network.params[key] -= learning_rate * grad[key]
 
     # grad 에 문제가 있음
@@ -107,6 +110,18 @@ for i in range(iters_num):
         print(f'{i + 1} Train Acc: ', round(train_acc, 3))
         print(f'{i + 1} Test Acc: ', round(test_acc, 3))
         print()
+
+print("time: ", time.time() - start)
+# accricay plotting
+x = np.arange(0, iters_num, 10)
+plt.plot(x, train_acc_list, marker='o', markersize=6, label='train acc')
+plt.plot(x, test_acc_list, marker='s', markersize=6,
+         label='test acc', linestyle='--')
+plt.xlabel("epochs")
+plt.ylabel("accuracy")
+plt.ylim(0, 1.0)
+plt.legend(loc='lower right')
+plt.show()
 
 
 """ numerical vs backpropagation 검증
