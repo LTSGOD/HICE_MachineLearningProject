@@ -69,7 +69,7 @@ test_label = Tlabel
 network = TwoLayerNet(input_size=30000, hidden_size=1000, output_size=33)
 
 # 하이퍼 파라미터
-iters_num = 1200  # 반복횟수
+iters_num = 1000  # 반복횟수
 train_size = train_x.shape[0]
 learning_rate = 0.01  # 학습률
 
@@ -90,7 +90,7 @@ for i in range(iters_num):
     grad = network.gradient(x_batch, t_batch)
 
     # 매개변수 갱신
-    for key in ('W1', 'b1', 'W2', 'b2', 'W3', 'b3'):
+    for key in ('W1', 'b1', 'W2', 'b2'):
         network.params[key] -= learning_rate * grad[key]
 
     # grad 에 문제가 있음
@@ -114,8 +114,8 @@ for i in range(iters_num):
 print("time: ", time.time() - start)
 # accricay plotting
 x = np.arange(0, iters_num, 10)
-plt.plot(x, train_acc_list, marker='o', markersize=6, label='train acc')
-plt.plot(x, test_acc_list, marker='s', markersize=6,
+plt.plot(x, train_acc_list, marker='o', markersize=2, label='train acc')
+plt.plot(x, test_acc_list, marker='s', markersize=2,
          label='test acc', linestyle='--')
 plt.xlabel("epochs")
 plt.ylabel("accuracy")
