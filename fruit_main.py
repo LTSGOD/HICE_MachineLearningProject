@@ -51,7 +51,7 @@ test_generator = test_datagen.flow_from_directory(
 # plt.show()
 
 class Adam:
-    def __init__(self, lr=0.0001, beta1=0.9, beta2=0.999):
+    def __init__(self, lr=0.01, beta1=0.9, beta2=0.999):
         self.lr = lr
         self.beta1 = beta1
         self.beta2 = beta2
@@ -133,7 +133,6 @@ for i in range(iters_num):
     # SGD
     # for key in network.params.keys():
     #     network.params[key] -= learning_rate * grad[key]
-
 
     # 학습경과기록
     cost = network.cost(x_batch, t_batch)
