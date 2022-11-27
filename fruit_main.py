@@ -50,6 +50,41 @@ test_generator = test_datagen.flow_from_directory(
 
 # plt.show()
 
+class Adam:
+    def __init__(self, lr=0.0001, beta1=0.9, beta2=0.999):
+        self.lr = lr
+        self.beta1 = beta1
+        self.beta2 = beta2
+        self.iter = 0
+        self.m = None
+        self.v = None
+        self.m_hat = None
+        self.v_hat = None
+
+    def update(self, params, grads):
+        if self.m is None:
+            self.m, self.v, self.m_hat, self.v_hat = {}, {}, {}, {}
+            for key, val in params.items():
+                self.m[key] = np.zeros_like(val)
+                self.v[key] = np.zeros_like(val)
+                self.m_hat[key] = np.zeros_like(val)
+                self.v_hat[key] = np.zeros_like(val)
+
+        #self.iter += 1
+
+        for key in ('W1', 'b1', 'W2', 'b2'):
+            self.m[key] = self.beta1 * self.m[key] + \
+                (1 - self.beta1) * grads[key]
+            self.m_hat[key] = self.m[key]/(1 - self.beta1 * self.beta1)
+
+            self.v[key] = self.beta2 * self.v[key] + \
+                (1 - self.beta2) * grads[key] * grads[key]
+            self.v_hat[key] = self.v[key] / (1 - self.beta2 * self.beta2)
+
+            params[key] -= self.lr * self.m_hat[key] / \
+                np.sqrt(self.v_hat[key] + 10e-8)
+
+
 """---------------------------------train image--------------------------------------"""
 print("loading train image")
 img, label = next(training_generator)
@@ -67,9 +102,10 @@ test_label = Tlabel
 """--------------------------------NN학습--------------------------------------"""
 
 network = TwoLayerNet(input_size=30000, hidden_size=1000, output_size=33)
+Adam_g = Adam()
 
 # 하이퍼 파라미터
-iters_num = 1000  # 반복횟수
+iters_num = 300  # 반복횟수
 train_size = train_x.shape[0]
 learning_rate = 0.01  # 학습률
 
@@ -80,6 +116,8 @@ test_acc_list = []
 iter_per_epoch = max(train_size / batch_size, 1)
 """---------------------------------learning start--------------------------------------"""
 start = time.time()  # 시간측정
+
+
 for i in range(iters_num):
 
     batch_mask = np.random.choice(train_size, batch_size)
@@ -89,12 +127,13 @@ for i in range(iters_num):
     # 오차 역전파법
     grad = network.gradient(x_batch, t_batch)
 
-    # 매개변수 갱신
-    for key in ('W1', 'b1', 'W2', 'b2'):
-        network.params[key] -= learning_rate * grad[key]
+    # Adam
+    Adam_g.update(network.params, grad)
 
-    # grad 에 문제가 있음
-    # print(grad['W2'].shape)
+    # SGD
+    # for key in network.params.keys():
+    #     network.params[key] -= learning_rate * grad[key]
+
 
     # 학습경과기록
     cost = network.cost(x_batch, t_batch)
