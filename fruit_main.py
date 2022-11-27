@@ -105,7 +105,7 @@ network = TwoLayerNet(input_size=30000, hidden_size=1000, output_size=33)
 Adam_g = Adam()
 
 # 하이퍼 파라미터
-iters_num = 300  # 반복횟수
+iters_num = 500  # 반복횟수
 train_size = train_x.shape[0]
 learning_rate = 0.01  # 학습률
 
@@ -155,7 +155,7 @@ x = np.arange(0, iters_num, 10)
 plt.plot(x, train_acc_list, marker='o', markersize=2, label='train acc')
 plt.plot(x, test_acc_list, marker='s', markersize=2,
          label='test acc', linestyle='--')
-plt.xlabel("epochs")
+plt.xlabel("iter_num")
 plt.ylabel("accuracy")
 plt.ylim(0, 1.0)
 plt.legend(loc='lower right')
