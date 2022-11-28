@@ -1,18 +1,19 @@
+import time
+import os
+from fruitNN import TwoLayerNet
+import matplotlib.pyplot as plt
+from PIL import Image
+from keras_preprocessing.image import ImageDataGenerator
+import tensorflow as tf
 import numpy as np
 import warnings
-from keras_preprocessing.image import ImageDataGenerator
-from PIL import Image
-import matplotlib.pyplot as plt
-from fruitNN import TwoLayerNet
 import os
-import time
+os.environ['TF_CPP_MIN_LOG_LEVEL'] = '2'
 
 fruit_name = ["Apple Braeburn", "Apple Granny", "Apricot", "Avocado", "Banana", "Blueberry", "Cactus fruit", "Cantaloupe", "Cherry", "Clementine", "Corn", "Cucumber Ripe", "Grape blue", "Kiwi", "Lemon", "Limes",
               "Mango", "Onion White", "Orange", "Papaya", "Passion Fruit", "Peach", "Pear", "Pepper green", "Pepper red", "Pineapple", "Plum", "Pomegranate", "Potato Red", "Raspberry", "Strawberry", "Tomato", "Watermelon"]
 
 warnings.simplefilter(action='ignore', category=FutureWarning)
-
-"""---------------------------------Image option setting--------------------------------------"""
 
 # trainig data 파일경로
 training_dir = "C:\\Users\\82104\\OneDrive\\HICEMachingLearningProject\\archive\\train\\train"
@@ -40,6 +41,18 @@ test_generator = test_datagen.flow_from_directory(
     target_size=(100, 100),  # target 크기 100 x 100
 )
 
+
+# plt.figure(figsize=(100, 100))
+
+# for i in range(100):
+#     plt.subplot(10, 10, i+1)
+#     plt.imshow(Timg[i])
+#     con = name_converter(test_label[i])
+#     plt.title(fruit_name[con])
+#     plt.axis('off')
+
+
+# plt.show()
 
 class Adam:
     def __init__(self, lr=0.0001, beta1=0.9, beta2=0.999):
@@ -87,15 +100,12 @@ train_label = label
 print("loading test image")
 Timg, Tlabel = next(test_generator)
 
-test_x = Timg.reshape(batch_size, 30000)
+test_x = Timg.reshape(batch_size, 30000)  # flatten(1차원배열로변경)
 test_label = Tlabel
 
 """--------------------------------NN학습--------------------------------------"""
 
-network_adam = TwoLayerNet(input_size=30000, hidden_size=1000,
-                           output_size=33)  # adam
-network_sgd = TwoLayerNet(
-    input_size=30000, hidden_size=1000, output_size=33)  # sgd
+network = TwoLayerNet(input_size=30000, hidden_size=1000, output_size=33)
 Adam_g = Adam()
 
 # 하이퍼 파라미터
@@ -103,11 +113,9 @@ iters_num = 500  # 반복횟수
 train_size = train_x.shape[0]
 learning_rate = 0.01  # 학습률
 
-train_cost_adam_list = []  # Adam cost list
-train_cost_sgd_list = []  # sgd cost list
-
-train_adam_acc_list = []  # train accuracy list
-test_adam_acc_list = []  # test accuracy list
+train_cost_list = []
+train_acc_list = []
+test_acc_list = []
 
 iter_per_epoch = max(train_size / batch_size, 1)
 """---------------------------------learning start--------------------------------------"""
@@ -121,43 +129,37 @@ for i in range(iters_num):
     t_batch = train_label[batch_mask]
 
     # 오차 역전파법
-    grad_adam = network_adam.gradient(x_batch, t_batch)
-    grad_sgd = network_sgd.gradient(x_batch, t_batch)
+    grad = network.gradient(x_batch, t_batch)
 
     # Adam
-    Adam_g.update(network_adam.params, grad_adam)
+    Adam_g.update(network.params, grad)
 
     # SGD
-    for key in network_sgd.params.keys():
-        network_sgd.params[key] -= learning_rate * grad_sgd[key]
+    # for key in network.params.keys():
+    #     network.params[key] -= learning_rate * grad[key]
 
     # 학습경과기록
-    cost = network_adam.cost(x_batch, t_batch)
-    cost2 = network_sgd.cost(x_batch, t_batch)
-    train_cost_adam_list.append(cost)
-    train_cost_sgd_list.append(cost2)
-    print("epoch", i, "Adam cost:", cost, "SGD cost2", cost2)
+    cost = network.cost(x_batch, t_batch)
+    train_cost_list.append(cost)
+    print("epoch", i, "cost:", cost)
 
+    # 1에폭당 정확도
     if(i % 10 == 0):
-        train_acc = network_adam.accuracy(x_batch, t_batch, True)
-        test_acc = network_adam.accuracy(test_x, test_label, False)
-        train_adam_acc_list.append(train_acc)
-        test_adam_acc_list.append(test_acc)
+        train_acc = network.accuracy(x_batch, t_batch, True)
+        test_acc = network.accuracy(test_x, test_label, False)
+        train_acc_list.append(train_acc)
+        test_acc_list.append(test_acc)
 
         print(f'{i + 1} Train Acc: ', round(train_acc, 3))
         print(f'{i + 1} Test Acc: ', round(test_acc, 3))
         print()
 
 
-# timer
-
 print("time: ", time.time() - start)
-
-# accuracy plotting
-
+# accricay plotting
 x = np.arange(0, iters_num, 10)
-plt.plot(x, train_adam_acc_list, marker='o', markersize=1, label='train acc')
-plt.plot(x, test_adam_acc_list, marker='s', markersize=1,
+plt.plot(x, train_acc_list, marker='o', markersize=2, label='train acc')
+plt.plot(x, test_acc_list, marker='s', markersize=2,
          label='test acc', linestyle='--')
 plt.xlabel("iter_num")
 plt.ylabel("accuracy")
@@ -165,32 +167,23 @@ plt.ylim(0, 1.0)
 plt.legend(loc='lower right')
 plt.show()
 
-# cost plotting
 
-cx = np.arange(0, iters_num, 1)
-plt.plot(cx, train_cost_adam_list, marker='o',  label='Adam')
-plt.plot(cx, train_cost_sgd_list, marker='s', label='SGD', linestyle='--')
-plt.xlabel("iter_num")
-plt.ylabel("cost")
-plt.ylim(0, 1.0)
-plt.legend(loc='lower right')
-plt.show()
+""" numerical vs backpropagation 검증
+img, label = next(training_generator)
 
+train_x = img.reshape(batch_size, 30000)  # flatten(1차원배열로변경)
+train_label = label
 
-# numerical vs backpropagation 검증
-# img, label = next(training_generator)
+batch_x = train_x[:1]
+batch_t = train_label[:1]
 
-# train_x = img.reshape(batch_size, 30000)  # flatten(1차원배열로변경)
-# train_label = label
+print(batch_t)
 
-# batch_x = train_x[:1]
-# batch_t = train_label[:1]
+grad_numerical = network.numerical_gradient(batch_x, batch_t)
+grad_backprop = network.gradient(batch_x, batch_t)
 
-# print(batch_t)
+print("hohoho")
 
-# grad_numerical = network_adam.numerical_gradient(batch_x, batch_t)
-# grad_backprop = network_adam.gradient(batch_x, batch_t)
-
-# for key in grad_numerical.keys():
-#     diff = np.average(np.abs(grad_backprop[key] - grad_numerical[key]))
-#     print(key + ":" + str(diff))
+for key in grad_numerical.keys():
+    diff = np.average(np.abs(grad_backprop[key] - grad_numerical[key]))
+    print(key + ":" + str(diff))"""
