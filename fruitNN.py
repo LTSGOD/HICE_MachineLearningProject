@@ -2,15 +2,12 @@ import numpy as np
 from collections import OrderedDict
 
 
-count = 0
-
-
 class Affine:
     def __init__(self, W, b):
         self.W, self.b = W, b
         self.x, self.dW, self.db = None, None, None
 
-    def forward(self, x):
+    def forward(self, x, traing_flg=True):
         self.x = x
         out = np.dot(x, self.W) + self.b
         return out
@@ -27,7 +24,7 @@ class Relu:
     def __init__(self):
         self.mask = None
 
-    def forward(self, x):
+    def forward(self, x, train_flg=True):
         self.mask = (x <= 0)
         out = x.copy()
         out[self.mask] = 0
@@ -46,11 +43,9 @@ class SoftmaxWithLoss:
         self.loss = None
         self.y, self.t = None, None
 
-    def forward(self, x, t):
+    def forward(self, x, t, train_flg=True):
         self.t = t
-        self.y = softmax(x)  # 100,3 행렬
-        # print(self.y.shape)
-        #print("softmax: ", self.y)
+        self.y = softmax(x)
         self.loss = cross_entropy_error(self.y, self.t)
 
         return self.loss
@@ -75,6 +70,53 @@ def softmax(x):
     return result.T
 
 # soft max에서 문제발견 각행에서 최솟값을 빼야하는데 그냥 전체맥스값에서 빼버림
+
+
+class Tanh:
+    def __init__(self):
+        self.mask = None
+
+    def forward(self, x, train_flg=True):
+        out = np.tanh(x)
+        self.out = out
+
+        return out
+
+    def backward(self, dout):
+        dx = dout*(1 - self.out*self.out)
+
+        return dx
+
+
+class LeakyReLU:
+    def __init__(self):
+        self.out = None
+
+    def forward(self, z, train_flg=True):
+        self.out = z
+        self.out[self.out <= 0] *= 0.001
+        return self.out
+
+    def backward(self, dout):
+        self.out[self.out > 0] = 1
+        self.out[self.out <= 0] = 0.001
+        return self.out * dout
+
+
+class Dropout:
+    def __init__(self, dropout_ratio=0.1):
+        self.dropout_ratio = dropout_ratio
+        self.mask = None
+
+    def forward(self, x, train_flg=True):
+        if train_flg:
+            self.mask = np.random.rand(*x.shape) > self.dropout_ratio
+            return x * self.mask
+        else:
+            return x * (1.0 - self.dropout_ratio)
+
+    def backward(self, dout):
+        return dout * self.mask
 
 
 def cross_entropy_error(y, t):
@@ -145,14 +187,15 @@ class TwoLayerNet:
         self.layers = OrderedDict()
         self.layers['Affine1'] = Affine(self.params['W1'], self.params['b1'])
         self.layers['Relu1'] = Relu()
+        self.layers['Dropout'] = Dropout()
 
         self.layers['Affine2'] = Affine(self.params['W2'], self.params['b2'])
         self.lastLayer = SoftmaxWithLoss()
 
-    def predict(self, x):
+    def predict(self, x, train_flg=True):
 
         for layer in self.layers.values():
-            x = layer.forward(x)
+            x = layer.forward(x, train_flg)
         return x
 
     # x: 입력 데이터, t : 정답레이블
@@ -162,8 +205,8 @@ class TwoLayerNet:
         # print(result) 스칼라 (크로스엔트로피오차값)
         return result
 
-    def accuracy(self, x, t):
-        y = self.predict(x)
+    def accuracy(self, x, t, train_flg=True):
+        y = self.predict(x, train_flg)
         y = np.argmax(y, axis=1)  # argmax는 요소가 최댓값인 index들을 리스트로 나타냄
         if t.ndim != 1:  # ndim은 차원의 수를 나타내며 one-hot-encoding이 되어있는 경우 실행
             t = np.argmax(t, axis=1)
@@ -198,14 +241,12 @@ class TwoLayerNet:
         for layer in layers:
             dout = layer.backward(dout)
 
-        # 결과 저장s
+        # 결과 저장
         grads = {}
         grads['W1'] = self.layers['Affine1'].dW
         grads['b1'] = self.layers['Affine1'].db
 
         grads['W2'] = self.layers['Affine2'].dW
         grads['b2'] = self.layers['Affine2'].db
-
-        # print(grads)
 
         return grads
